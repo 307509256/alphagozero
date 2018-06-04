@@ -1,7 +1,7 @@
 import tensorflow as tf
 from conf import conf
 from keras.layers import (
-        Conv2D, BatchNormalization, Input, Activation, Dense, Reshape,
+        Conv2D, Conv3D, BatchNormalization, Input, Activation, Dense, Reshape,
         Add,
 )
 from keras.optimizers import SGD
@@ -24,16 +24,16 @@ REGULARIZERS = {
 
 def residual_block(input_, node_name):
     with tf.name_scope(node_name):
-        conv1 = Conv2D(filters=256, kernel_size=(3, 3), strides=1, padding='same', **REGULARIZERS)(input_)
+        conv1 = Conv3D(filters=256, kernel_size=(3, 3, 3),  strides=1, padding='same', **REGULARIZERS)(input_)
         batch1 = BatchNormalization()(conv1)
         relu = Activation('relu')(batch1)
-        conv2 = Conv2D(filters=256, kernel_size=(3, 3), strides=1, padding='same', **REGULARIZERS)(relu)
+        conv2 = Conv3D(filters=256, kernel_size=(3, 3, 3), strides=1, padding='same', **REGULARIZERS)(relu)
         batch2 = BatchNormalization()(conv2)
         add = Add()([batch2, input_])
         out = Activation('relu')(add)
     return out
 
-
+# 计算全局loss
 def loss(y_true, y_pred):
     mse = K.mean(K.square(y_pred - y_true), axis=-1)
     categorical_crossentropy = K.categorical_crossentropy(y_true, y_pred)
@@ -42,13 +42,14 @@ def loss(y_true, y_pred):
 
 def build_model(name):
     with tf.name_scope('input'):
-        _input = Input(shape=(SIZE, SIZE, 17))
-        conv1 = Conv2D(filters=256, kernel_size=(3, 3), strides=1,
+        # 例如input_shape = (3,10,128,128)代表对10帧128*128的彩色RGB图像进行卷积 
+        _input = Input(shape=(SIZE, SIZE, SIZE, 17))
+        conv1 = Conv3D(filters=256, kernel_size=(3, 3, 3), strides=1,
                 data_format='channels_last', **REGULARIZERS)(_input)
         batch1 = BatchNormalization()(conv1)
         relu = Activation('relu')(batch1)
 
-
+    # name_scope 构建图形
     tower_input = relu
     with tf.name_scope('tower'):
         for i in range(conf['N_RESIDUAL_BLOCKS']):
@@ -58,21 +59,22 @@ def build_model(name):
 
 
     with tf.name_scope('policy'):
-        policy_conv = Conv2D(filters=2, kernel_size=(1, 1), strides=1, **REGULARIZERS)(tower_output)
+        board_nums =  SIZE*SIZE*SIZE #pow(SIZE,3) - pow(SIZE-2,3) 
+        policy_conv = Conv3D(filters=2, kernel_size=(1, 1, 1), strides=1, **REGULARIZERS)(tower_output)
         policy_batch = BatchNormalization()(policy_conv)
         policy_relu = Activation('relu')(policy_batch)
 
         shape = policy_relu._keras_shape
-        policy_shape = (shape[1] * shape[2] * shape[3], )
+        policy_shape = (shape[1] * shape[2] * shape[3] * shape[4], )
         policy_reshape = Reshape(target_shape=policy_shape)(policy_relu)
-        policy_out = Dense(SIZE*SIZE + 1, activation='softmax', name="policy_out", **REGULARIZERS)(policy_reshape)
+        policy_out = Dense(board_nums + 1, activation='softmax', name="policy_out", **REGULARIZERS)(policy_reshape)
 
     with tf.name_scope('value'):
-        value_conv = Conv2D(filters=2, kernel_size=(1, 1), strides=1, **REGULARIZERS)(tower_output)
+        value_conv = Conv3D(filters=2, kernel_size=(1, 1, 1), strides=1, **REGULARIZERS)(tower_output)
         value_batch = BatchNormalization()(value_conv)
         value_relu = Activation('relu')(value_batch)
         shape = value_relu._keras_shape
-        value_shape = (shape[1] * shape[2] * shape[3], )
+        value_shape = (shape[1] * shape[2] * shape[3] * shape[4], )
         value_reshape = Reshape(target_shape=value_shape)(value_relu)
         value_hidden = Dense(256, activation='relu', **REGULARIZERS)(value_reshape)
         value_out = Dense(1, activation='tanh', name="value_out", **REGULARIZERS)(value_hidden)

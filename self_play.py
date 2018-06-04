@@ -6,10 +6,12 @@ import datetime
 import h5py
 import tqdm
 from sgfsave import save_game_sgf
+
 from play import (
     index2coord, make_play, game_init,
     show_board, get_winner,
 )
+
 from engine import ModelEngine
 from random import random
 
@@ -23,12 +25,12 @@ MOVE_INDEX = conf['MOVE_INDEX']
 GAME_FILE = conf['GAME_FILE']
 Cpuct = 1
 
-def show_tree(x, y, tree, indent=''):
-    print('%s Move(%s,%s) p: %s, count: %s' % (indent, x, y, tree['p'], tree['count']))
-    for action, node in tree['subtree'].items():
-        x, y = index2coord(action)
-        show_tree(x, y, node, indent=indent+'--')
 
+def show_tree(x, y, z, tree, indent=''):
+    print('%s Move(%s,%s) p: %s, count: %s' % (indent, x, y, z, tree['p'], tree['count']))
+    for action, node in tree['subtree'].items():
+        x, y, z = index2coord(action)
+        show_tree(x, y, z, node, indent=indent+'--')
 
 
 def play_game(model1, model2, mcts_simulations, stop_exploration, self_play=False, num_moves=None, resign_model1=None, resign_model2=None):
@@ -49,8 +51,9 @@ def play_game(model1, model2, mcts_simulations, stop_exploration, self_play=Fals
     start = datetime.datetime.now()
     end_reason = "PLAYED ALL MOVES"
 
+    board_num = SIZE*SIZE*SIZE  #pow(SIZE,3) - pow(SIZE-2,3)
     if num_moves is None:
-        num_moves = SIZE * SIZE * 2
+        num_moves = (board_num) * 2
 
     for move_n in range(num_moves):
         last_value = value
@@ -59,24 +62,24 @@ def play_game(model1, model2, mcts_simulations, stop_exploration, self_play=Fals
             engine2.set_temperature(0)
 
         if move_n % 2 == 0:
-            x, y, policy_target, value, _, _, policy = engine1.genmove("B")
+            x, y, z, policy_target, value, _, _, policy = engine1.genmove("B")
             if y == SIZE + 1:
                 end_reason = 'RESIGN'
                 break
-            engine2.play("B", x, y, update_tree=not self_play)
+            engine2.play("B", x, y, z, update_tree=not self_play)
         else:
-            x, y, policy_target, value, _, _, policy = engine2.genmove("W")
+            x, y, z, policy_target, value, _, _, policy = engine2.genmove("W")
             if y == SIZE + 1:
                 end_reason = 'RESIGN'
                 break
-            engine1.play("B", x, y, update_tree=not self_play)
+            engine1.play("B", x, y, z, update_tree=not self_play)
 
         move_data = {
             'board': np.copy(board),
             'policy': policy_target,
             'policy_variation': np.linalg.norm(policy_target - policy),
             'value': value,
-            'move': (x, y),
+            'move': (x, y, z),
             'move_n': move_n,
             'player': player ,
         }
@@ -92,13 +95,13 @@ def play_game(model1, model2, mcts_simulations, stop_exploration, self_play=Fals
             break
 
         # Swap players
-        board, player = make_play(x, y, board)
+        board, player = make_play(x, y, z, board)
 
         if conf['SHOW_EACH_MOVE']:
             # Inverted here because we already swapped players
             color = "W" if player == 1 else "B"
 
-            print("%s(%s,%s)" % (color, x, y)) 
+            print("%s(%s,%s,%s)" % (color, x, y, z)) 
             print("")
             print(show_board(board))
             print("")
@@ -141,6 +144,7 @@ def play_game(model1, model2, mcts_simulations, stop_exploration, self_play=Fals
     return game_data
 
 
+
 def self_play(model, n_games, mcts_simulations):
     desc = "Self play %s" % model.name
     games = tqdm.tqdm(range(n_games), desc=desc)
@@ -177,6 +181,7 @@ def self_play(model, n_games, mcts_simulations):
         save_game_data(model.name, game_data)
         games_data.append(game_data)
     return games_data
+
 
 def get_game_n(model_name):
     directory = os.path.join(conf["GAMES_DIR"], model_name)

@@ -41,9 +41,9 @@ def train(model, game_model_name, epochs=None):
         for worker in tqdm.tqdm(range(NUM_WORKERS), desc="Worker_batch"):
 
             chosen = choices(indices, weights, k = BATCH_SIZE)
-
-            X = np.zeros((BATCH_SIZE, SIZE, SIZE, 17))
-            policy_y = np.zeros((BATCH_SIZE, SIZE*SIZE + 1))
+            board_nums =  SIZE*SIZE*SIZE #pow(SIZE,3) - pow(SIZE-2, 3) 
+            X = np.zeros((BATCH_SIZE, SIZE, SIZE, SIZE, 17))
+            policy_y = np.zeros((BATCH_SIZE, board_nums + 1))
             value_y = np.zeros((BATCH_SIZE, 1))
             for j, (game_n, move) in enumerate(chosen):
                 filename = os.path.join(directory, GAME_FILE % game_n)

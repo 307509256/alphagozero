@@ -6,13 +6,16 @@ from math import cos, sin, pi
 
 SIZE = conf['SIZE']
 
+# 这个模块我感觉是通过旋转等操作，创造出几盘类似的棋盘
+# 这样可以减少训练的次数
+
 def _id(tensor):
     return tensor
 
 def rotation_indexes(angle):
-    rotation_swap = [0 for i in range(SIZE * SIZE + 1)]
-    for x, y in itertools.product(range(SIZE), repeat=2):
-        index = x + SIZE * y
+    rotation_swap = [0 for i in range(SIZE * SIZE * SIZE + 1)]
+    for x, y, z in itertools.product(range(SIZE), repeat=3):
+        index = x + SIZE * y + SIZE * SIZE * z
 
         x = x - (SIZE - 1)/2
         y = y - (SIZE - 1)/2
@@ -22,13 +25,13 @@ def rotation_indexes(angle):
         newy += (SIZE - 1)/2
         transpose_index = int(round(newx + SIZE * newy))
         rotation_swap[index] = transpose_index
-    rotation_swap[SIZE * SIZE] = SIZE * SIZE
+    rotation_swap[SIZE * SIZE * SIZE] = SIZE * SIZE * SIZE
     return rotation_swap
 
 def axis_symmetry_indexes(angle):
-    rotation_swap = [0 for i in range(SIZE * SIZE + 1)]
-    for x, y in itertools.product(range(SIZE), repeat=2):
-        index = x + SIZE * y
+    rotation_swap = [0 for i in range(SIZE * SIZE * SIZE + 1)]
+    for x, y,z in itertools.product(range(SIZE), repeat=3):
+        index = x + SIZE * y + SIZE * SIZE * z
 
         x = x - (SIZE - 1)/2
         y = y - (SIZE - 1)/2
@@ -38,12 +41,13 @@ def axis_symmetry_indexes(angle):
         newy += (SIZE - 1)/2
         transpose_index = int(round(newx + SIZE * newy))
         rotation_swap[index] = transpose_index
-    rotation_swap[SIZE * SIZE] = SIZE * SIZE
+    rotation_swap[SIZE * SIZE * SIZE] = SIZE * SIZE * SIZE
     return rotation_swap
 
 ########## LEFT DIAGONAL
 def left_diagonal(board):
-    return np.transpose(board, axes=(0, 2, 1, 3))
+    return  board    
+    #return np.transpose(board, axes=(0, 2, 1, 3))
 
 LEFT_DIAGONAL_SWAP = axis_symmetry_indexes(pi/4.)
 def reverse_left_diagonal(policy):
@@ -118,6 +122,7 @@ SYMMETRIES = [
     (rotation_270, reverse_rotation_270),
 ]
 
+# 随机对称预测
 def random_symmetry_predict(model, board):
     symmetry, reverse_symmetry = choice(SYMMETRIES)
     symm_board = symmetry(board)
