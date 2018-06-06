@@ -21,9 +21,9 @@ def save_game_sgf(model_name, game_n, game_data):
     for move_data in game_data['moves']:
         node = game.extend_main_sequence()
         color = 'b' if move_data['player'] == 1 else 'w'
-        x, y = move_data['move']
+        x, y, z = move_data['move']
 
-        move = (SIZE - 1 - y, x) if y != SIZE else None  # Different orienation
+        move = (z, y, x) if y != SIZE else None  # Different orienation
 
         move_n = move_data['move_n']
         next_board = game_data['moves'][(move_n + 1) % len(game_data['moves'])]['board']

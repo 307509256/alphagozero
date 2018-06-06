@@ -43,47 +43,48 @@ class Engine(object):
         return ""
 
     def parse_move(self, move):
-
         if move.lower() == 'pass':
-            x, y = 0, SIZE
-            return x, y
+            x, y, z = 0, SIZE, 0
+            return x, y, z
         else:
-            letter = move[0]
-            number = move[1:]
+            number = move[0]
+            letter = move[1]
+            number2 = move[2:]
+            x = int(number) - 1
+            y = string.ascii_uppercase.index(letter)
+            if y >= 9:
+                y -= 1 # I is a skipped letter
+            z = int(number2) - 1
 
-            x = string.ascii_uppercase.index(letter)
-            if x >= 9:
-                x -= 1 # I is a skipped letter
-            y = int(number) - 1
+        # x, y = x, SIZE - y - 1
+        return x, y, z
 
-        x, y = x, SIZE - y - 1
-        return x, y
+    # genmove  3G1
+    def print_move(self, x, y, z):
+        # x, y = x, SIZE - y - 1
 
-    def print_move(self, x, y):
-        x, y = x, SIZE - y - 1
+        if y >= 8:
+            y += 1 # I is a skipped letter
 
-        if x >= 8:
-            x += 1 # I is a skipped letter
-
-        move = string.ascii_uppercase[x] + str(y + 1)
+        move = str(x + 1) + string.ascii_uppercase[y] + str(z + 1)
         return move
 
     def play(self, color, move):
         announced_player = COLOR_TO_PLAYER[color]
         assert announced_player == self.player
-        x, y = self.parse_move(move)
-        self.board, self.player = self.engine.play(color, x, y)
+        x, y, z = self.parse_move(move)
+        self.board, self.player = self.engine.play(color, x, y, z)
         return ""
 
     def genmove(self, color):
         announced_player = COLOR_TO_PLAYER[color]
         assert announced_player == self.player
 
-        x, y, policy_target, value, self.board, self.player, policy = self.engine.genmove(color)
-        self.player = self.board[0, 0, 0, -1]  # engine updates self.board already 
+        x, y, z, policy_target, value, self.board, self.player, policy = self.engine.genmove(color)
+        self.player = self.board[0, 0, 0, 0, -1]  # engine updates self.board already 
         with open(self.logfile, 'a') as f:
             f.write("PLAYER" + str(self.player) + '\n')
-        move_string = self.print_move(x, y)
+        move_string = self.print_move(x, y, z)
         result = move_string
         return result
 

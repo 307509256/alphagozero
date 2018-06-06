@@ -16,6 +16,7 @@ from engine import ModelEngine
 from random import random
 
 SIZE = conf['SIZE']
+BOARDNUM = conf['BOARDNUM']
 MCTS_BATCH_SIZE = conf['MCTS_BATCH_SIZE']
 DIRICHLET_ALPHA = conf['DIRICHLET_ALPHA']
 DIRICHLET_EPSILON = conf['DIRICHLET_EPSILON']
@@ -51,7 +52,7 @@ def play_game(model1, model2, mcts_simulations, stop_exploration, self_play=Fals
     start = datetime.datetime.now()
     end_reason = "PLAYED ALL MOVES"
 
-    board_num = SIZE*SIZE*SIZE  #pow(SIZE,3) - pow(SIZE-2,3)
+    board_num = BOARDNUM  #pow(SIZE,3) - pow(SIZE-2,3)
     if num_moves is None:
         num_moves = (board_num) * 2
 
@@ -116,8 +117,6 @@ def play_game(model1, model2, mcts_simulations, stop_exploration, self_play=Fals
 
     winner_engine = engine1 if (winner == 1) else engine2
     modelB, modelW = model1, model2
-
-
 
     if conf['SHOW_END_GAME']:
         if player == -1:

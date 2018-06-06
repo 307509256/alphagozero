@@ -11,6 +11,7 @@ from play import (
 
 
 SIZE = conf['SIZE']
+BOARDNUM = conf['BOARDNUM']
 MCTS_BATCH_SIZE = conf['MCTS_BATCH_SIZE']
 DIRICHLET_ALPHA = conf['DIRICHLET_ALPHA']
 DIRICHLET_EPSILON = conf['DIRICHLET_EPSILON']
@@ -130,10 +131,8 @@ def simulate(node, board, model, mcts_batch_size, original_player):
             leaf_node = action['node']
             subtree = new_subtree(policy, tmp_board, leaf_node)
             
-
             move = leaf_node['move']
             assert (player == 1 and move % 2 == 1) or (player == -1 and move % 2 == 0)
-
 
             leaf_node['subtree'] = subtree
 
@@ -185,7 +184,6 @@ class Tree(object):
     def __init__(self):
         self.tree = None
 
-
     def new_tree(self, policy, board, move=1, add_noise=False):
         mcts_tree = {
             'count': 0,
@@ -224,7 +222,7 @@ class ModelEngine(object):
     def set_temperature(self, temperature):
         self.temperature = temperature
 
-    def play(self, color, x, y, z,update_tree=True):
+    def play(self, color, x, y, z, update_tree=True):
         index = coord2index(x, y, z)
 
         if update_tree:
@@ -251,11 +249,10 @@ class ModelEngine(object):
         if not self.tree.tree or not self.tree.tree['subtree']:
             self.tree.new_tree(policy, self.board, move=self.move, add_noise=self.add_noise)
 
-
         index = select_play(policy, self.board, self.mcts_simulations, self.tree.tree, self.temperature, self.model)
         x, y, z= index2coord(index)
 
-        board_num =  SIZE*SIZE*SIZE #pow(SIZE, 3) - pow(SIZE-2, 3)
+        board_num =  BOARDNUM #pow(SIZE, 3) - pow(SIZE-2, 3)
         policy_target = np.zeros(board_num + 1)
         for _index, d in self.tree.tree['subtree'].items():
             policy_target[_index] = d['p']

@@ -30,7 +30,7 @@ def rotation_indexes(angle):
 
 def axis_symmetry_indexes(angle):
     rotation_swap = [0 for i in range(SIZE * SIZE * SIZE + 1)]
-    for x, y,z in itertools.product(range(SIZE), repeat=3):
+    for x, y, z in itertools.product(range(SIZE), repeat=3):
         index = x + SIZE * y + SIZE * SIZE * z
 
         x = x - (SIZE - 1)/2
@@ -46,8 +46,8 @@ def axis_symmetry_indexes(angle):
 
 ########## LEFT DIAGONAL
 def left_diagonal(board):
-    return  board    
-    #return np.transpose(board, axes=(0, 2, 1, 3))
+    #return  board    
+    return np.transpose(board, axes=(0, 2, 1, 3, 4))
 
 LEFT_DIAGONAL_SWAP = axis_symmetry_indexes(pi/4.)
 def reverse_left_diagonal(policy):
@@ -66,7 +66,7 @@ def reverse_vertical_axis(policy):
 
 ########## RIGHT DIAGONAL
 def right_diagonal(board):
-    return np.rot90(np.transpose(board, axes=(0, 2, 1, 3)), k=2, axes=(1, 2))
+    return np.rot90(np.transpose(board, axes=(0, 2, 1, 3, 4)), k=2, axes=(1, 2))
 
 RIGHT_DIAGONAL_SWAP = axis_symmetry_indexes(3*pi/4.)
 def reverse_right_diagonal(policy):

@@ -12,6 +12,7 @@ from keras.regularizers import l2
 import os
 
 SIZE = conf['SIZE']
+BOARDNUM = conf['BOARDNUM']
 L2_EPSILON = conf['L2_EPSILON']
 LEARNING_RATE = conf['LEARNING_RATE']
 MOMENTUM = conf['MOMENTUM']
@@ -59,7 +60,7 @@ def build_model(name):
 
 
     with tf.name_scope('policy'):
-        board_nums =  SIZE*SIZE*SIZE #pow(SIZE,3) - pow(SIZE-2,3) 
+        board_nums =  BOARDNUM # SIZE*SIZE*SIZE #pow(SIZE,3) - pow(SIZE-2,3) 
         policy_conv = Conv3D(filters=2, kernel_size=(1, 1, 1), strides=1, **REGULARIZERS)(tower_output)
         policy_batch = BatchNormalization()(policy_conv)
         policy_relu = Activation('relu')(policy_batch)

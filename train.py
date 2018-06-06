@@ -7,6 +7,7 @@ from conf import conf
 import tqdm
 
 SIZE = conf['SIZE']
+BOARDNUM = conf['BOARDNUM']
 BATCH_SIZE = conf['TRAIN_BATCH_SIZE']
 EPOCHS_PER_SAVE = conf['EPOCHS_PER_SAVE']
 NUM_WORKERS = conf['NUM_WORKERS']
@@ -31,6 +32,8 @@ def train(model, game_model_name, epochs=None):
     name = model.name
     base_name, index = name.split('_')
     new_name = "_".join([base_name, str(int(index) + 1)]) + ".h5"
+
+    # tensorboard
     tf_callback = TensorBoard(log_dir=os.path.join(conf['LOG_DIR'], new_name),
             histogram_freq=conf['HISTOGRAM_FREQ'], batch_size=BATCH_SIZE, write_graph=False, write_grads=False)
     nan_callback = TerminateOnNaN()
@@ -41,7 +44,7 @@ def train(model, game_model_name, epochs=None):
         for worker in tqdm.tqdm(range(NUM_WORKERS), desc="Worker_batch"):
 
             chosen = choices(indices, weights, k = BATCH_SIZE)
-            board_nums =  SIZE*SIZE*SIZE #pow(SIZE,3) - pow(SIZE-2, 3) 
+            board_nums =  BOARDNUM #pow(SIZE,3) - pow(SIZE-2, 3) 
             X = np.zeros((BATCH_SIZE, SIZE, SIZE, SIZE, 17))
             policy_y = np.zeros((BATCH_SIZE, board_nums + 1))
             value_y = np.zeros((BATCH_SIZE, 1))
@@ -51,7 +54,6 @@ def train(model, game_model_name, epochs=None):
                     board = f['move_%s/board' % move][:]
                     policy = f['move_%s/policy_target' % move][:]
                     value_target = f['move_%s/value_target' % move][()]
-
 
                     X[j] = board
                     policy_y[j] = policy
@@ -66,5 +68,4 @@ def train(model, game_model_name, epochs=None):
                 verbose=0,
             )
     model.name = new_name.split('.')[0]
-    model.save(os.path.join(conf['MODEL_DIR'], new_name))
-
+    model.save(os.path.join(conf['MODEL_DIR'], new_name))    

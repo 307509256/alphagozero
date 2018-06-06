@@ -5,6 +5,14 @@ from conf import conf
 SIZE = conf['SIZE']
 SWAP_INDEX = [1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14]
 
+def isplane(x,y,z):
+    if x==0 or x==SIZE-1:
+        return True
+    if y==0 or y==SIZE-1:
+        return True
+    if z==0 or z==SIZE-1:
+        return True
+    return False
 # x+y*9 = index    
 def index2coord(index):
     z = index // (SIZE*SIZE)
@@ -146,7 +154,8 @@ def take_stones(x, y, z, board):
 def make_play(x, y, z, board):
     player = board[0,0,0,0,-1]
     board[:,:,:,:,2:16] = board[:,:,:,:,0:14]
-    if y != SIZE:
+        
+    if y != SIZE and isplane(x, y, z):
         # assert board[0,z,y,x,1] == 0
         # assert board[0,z,y,x,0] == 0
         board[0,z,y,x,0] = 1  # Careful here about indices
