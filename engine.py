@@ -9,9 +9,7 @@ from play import (
     coord2index,
 )
 
-
 SIZE = conf['SIZE']
-BOARDNUM = conf['BOARDNUM']
 MCTS_BATCH_SIZE = conf['MCTS_BATCH_SIZE']
 DIRICHLET_ALPHA = conf['DIRICHLET_ALPHA']
 DIRICHLET_EPSILON = conf['DIRICHLET_EPSILON']
@@ -19,6 +17,15 @@ RESIGNATION_PERCENT = conf['RESIGNATION_PERCENT']
 RESIGNATION_ALLOWED_ERROR = conf['RESIGNATION_ALLOWED_ERROR']
 COLOR_TO_PLAYER = {'B': 1, 'W': -1}
 Cpuct = 1
+
+def isplane(x,y,z):
+    if x==0 or x==SIZE-1:
+        return True
+    if y==0 or y==SIZE-1:
+        return True
+    if z==0 or z==SIZE-1:
+        return True
+    return False
 
 def new_subtree(policy, board, parent, add_noise=False):
     leaf = {}
@@ -97,6 +104,8 @@ def simulate(node, board, model, mcts_batch_size, original_player):
                 tmp_action = action
                 tmp_board = np.copy(board)
                 x, y, z = index2coord(tmp_action)
+                if isplane(x, y, z) == False:
+                    continue 
                 tmp_board, _ = make_play(x, y, z, tmp_board)
                 while tmp_node['subtree'] != {}:
                     tmp_max_actions = top_n_actions(tmp_node['subtree'], mcts_batch_size)
@@ -107,14 +116,19 @@ def simulate(node, board, model, mcts_batch_size, original_player):
                     # update will start, working up the tree
                     dic['node'] = tmp_node 
                     x, y, z = index2coord(tmp_action)
+                    
+                    if isplane(x, y, z) == False:
+                        print ("while: ", x, y, z)
+                
                     make_play(x, y, z, tmp_board)
 
                 boards[i] = tmp_board
             else:
                 tmp_board = np.copy(board)
                 x, y, z = index2coord(action)
-                tmp_board, _ = make_play(x, y, z, tmp_board)
-                boards[i] = tmp_board
+                if isplane(x, y, z) == True:
+                    tmp_board, _ = make_play(x, y, z, tmp_board)
+                    boards[i] = tmp_board
 
         # The random symmetry will changes boards, so copy them before hand
         presymmetry_boards = np.copy(boards)
@@ -125,6 +139,8 @@ def simulate(node, board, model, mcts_batch_size, original_player):
             shape = tmp_board.shape
             tmp_board = tmp_board.reshape([1] + list(shape))
             player = tmp_board[0,0,0,0,-1]
+            if player == 0:
+                continue
             # Inverse value if we're looking from other player perspective
             value = v[0] if player == original_player else -v[0]
 
@@ -241,8 +257,8 @@ class ModelEngine(object):
         value = values[0]
         if self.resign and value <= self.resign:
             x = 0
-            y = SIZE + 1
-            z = 0
+            y = 0
+            z = SIZE + 1
             return x, y, z, policy, value, self.board, self.player, policy
 
         # Start of the game mcts_tree is None, but it can be {} if we selected a play that mcts never checked
@@ -252,8 +268,8 @@ class ModelEngine(object):
         index = select_play(policy, self.board, self.mcts_simulations, self.tree.tree, self.temperature, self.model)
         x, y, z= index2coord(index)
 
-        board_num =  BOARDNUM #pow(SIZE, 3) - pow(SIZE-2, 3)
-        policy_target = np.zeros(board_num + 1)
+        policy_target = np.zeros(SIZE*SIZE*SIZE  + 1)
+
         for _index, d in self.tree.tree['subtree'].items():
             policy_target[_index] = d['p']
 

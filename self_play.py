@@ -16,7 +16,6 @@ from engine import ModelEngine
 from random import random
 
 SIZE = conf['SIZE']
-BOARDNUM = conf['BOARDNUM']
 MCTS_BATCH_SIZE = conf['MCTS_BATCH_SIZE']
 DIRICHLET_ALPHA = conf['DIRICHLET_ALPHA']
 DIRICHLET_EPSILON = conf['DIRICHLET_EPSILON']
@@ -26,6 +25,14 @@ MOVE_INDEX = conf['MOVE_INDEX']
 GAME_FILE = conf['GAME_FILE']
 Cpuct = 1
 
+def isplane(x,y,z):
+    if x==0 or x==SIZE-1:
+        return True
+    if y==0 or y==SIZE-1:
+        return True
+    if z==0 or z==SIZE-1:
+        return True
+    return False
 
 def show_tree(x, y, z, tree, indent=''):
     print('%s Move(%s,%s) p: %s, count: %s' % (indent, x, y, z, tree['p'], tree['count']))
@@ -52,7 +59,7 @@ def play_game(model1, model2, mcts_simulations, stop_exploration, self_play=Fals
     start = datetime.datetime.now()
     end_reason = "PLAYED ALL MOVES"
 
-    board_num = BOARDNUM  #pow(SIZE,3) - pow(SIZE-2,3)
+    board_num = SIZE * SIZE * SIZE
     if num_moves is None:
         num_moves = (board_num) * 2
 
@@ -64,13 +71,17 @@ def play_game(model1, model2, mcts_simulations, stop_exploration, self_play=Fals
 
         if move_n % 2 == 0:
             x, y, z, policy_target, value, _, _, policy = engine1.genmove("B")
-            if y == SIZE + 1:
+            if isplane(x, y, z) == False:
+                break
+            if z == SIZE + 1:
                 end_reason = 'RESIGN'
                 break
             engine2.play("B", x, y, z, update_tree=not self_play)
         else:
             x, y, z, policy_target, value, _, _, policy = engine2.genmove("W")
-            if y == SIZE + 1:
+            if isplane(x, y, z) == False:
+                break
+            if z == SIZE + 1:
                 end_reason = 'RESIGN'
                 break
             engine1.play("B", x, y, z, update_tree=not self_play)
@@ -86,12 +97,12 @@ def play_game(model1, model2, mcts_simulations, stop_exploration, self_play=Fals
         }
         moves.append(move_data)
 
-        if skipped_last and y == SIZE:
+        if skipped_last and z == SIZE:
             end_reason = "BOTH_PASSED"
             break
-        skipped_last = y == SIZE
+        skipped_last = z == SIZE
 
-        if y == SIZE + 1:
+        if z == SIZE + 1:
             end_reason = 'RESIGN'
             break
 
@@ -104,7 +115,7 @@ def play_game(model1, model2, mcts_simulations, stop_exploration, self_play=Fals
 
             print("%s(%s,%s,%s)" % (color, x, y, z)) 
             print("")
-            print(show_board(board))
+            #print(show_board(board))
             print("")
 
 

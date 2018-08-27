@@ -12,7 +12,6 @@ from keras.regularizers import l2
 import os
 
 SIZE = conf['SIZE']
-BOARDNUM = conf['BOARDNUM']
 L2_EPSILON = conf['L2_EPSILON']
 LEARNING_RATE = conf['LEARNING_RATE']
 MOMENTUM = conf['MOMENTUM']
@@ -60,7 +59,7 @@ def build_model(name):
 
 
     with tf.name_scope('policy'):
-        board_nums =  BOARDNUM # SIZE*SIZE*SIZE #pow(SIZE,3) - pow(SIZE-2,3) 
+
         policy_conv = Conv3D(filters=2, kernel_size=(1, 1, 1), strides=1, **REGULARIZERS)(tower_output)
         policy_batch = BatchNormalization()(policy_conv)
         policy_relu = Activation('relu')(policy_batch)
@@ -68,7 +67,7 @@ def build_model(name):
         shape = policy_relu._keras_shape
         policy_shape = (shape[1] * shape[2] * shape[3] * shape[4], )
         policy_reshape = Reshape(target_shape=policy_shape)(policy_relu)
-        policy_out = Dense(board_nums + 1, activation='softmax', name="policy_out", **REGULARIZERS)(policy_reshape)
+        policy_out = Dense(SIZE*SIZE*SIZE + 1, activation='softmax', name="policy_out", **REGULARIZERS)(policy_reshape)
 
     with tf.name_scope('value'):
         value_conv = Conv3D(filters=2, kernel_size=(1, 1, 1), strides=1, **REGULARIZERS)(tower_output)

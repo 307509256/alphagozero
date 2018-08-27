@@ -14,6 +14,7 @@ def elect_model_as_best_model(model):
     full_filename = os.path.join(conf['MODEL_DIR'], conf['BEST_MODEL'])
     model.save(full_filename)
 
+# PK的方式寻找最适合的模型
 def evaluate(best_model, tested_model):
     total = 0
     wins = 0
@@ -35,9 +36,12 @@ def evaluate(best_model, tested_model):
             wins += 1
         total += 1
         moves = len(game_data['moves'])
-        new_desc = desc + " (winrate:%s%% %.2fs/move)" % (int(wins/total*100), (stop - start).seconds / moves)
-        tq.set_description(new_desc)
-
+        print (wins, moves)
+        if wins > 0  and moves > 0 :
+            new_desc = desc + " (winrate:%s%% %.2fs/move)" % (int(wins/total*100), (stop - start).seconds / moves)
+            tq.set_description(new_desc)
+        
+        
         save_game_data(best_model.name, game_data)
 
 

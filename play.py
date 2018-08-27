@@ -18,6 +18,9 @@ def index2coord(index):
     z = index // (SIZE*SIZE)
     y = (index - z*SIZE*SIZE) // SIZE
     x = index - z*SIZE*SIZE - y*SIZE
+    if x == 9 or y == 9 or z == 9:
+        print ("xyz: ", x, y, z, index)
+       
     return x, y, z
 
 
@@ -69,7 +72,7 @@ def _show_board(board, policy):
                 else:
                     string += u". "
         string += "\n"
-    if policy is not None and y == SIZE:
+    if policy is not None and z == SIZE:
         string += "Pass policy"
     return string
 
@@ -155,7 +158,7 @@ def make_play(x, y, z, board):
     player = board[0,0,0,0,-1]
     board[:,:,:,:,2:16] = board[:,:,:,:,0:14]
         
-    if y != SIZE and isplane(x, y, z):
+    if z != SIZE:
         # assert board[0,z,y,x,1] == 0
         # assert board[0,z,y,x,0] == 0
         board[0,z,y,x,0] = 1  # Careful here about indices
